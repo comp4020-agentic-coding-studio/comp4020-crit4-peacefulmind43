@@ -40,3 +40,20 @@ A starting point, not a rulebook. As you learn what your prototype needs --- a
 convention the work has to hold to, a sensor that keeps catching you out (a
 linter, say), a fact about the stack that is easy to get wrong --- write it down
 here and wire it into `check`. Growing this file is the work.
+
+## Rules learned so far
+
+Carried forward from Assignment 1 (a different stack --- an OLS house-price
+model, not audio) --- only the stack-independent lessons survive the switch:
+
+- **Don't trust that a listener is wired right just because the code reads
+  right --- drive the actual control and watch the output change.** A `<select>`
+  that looked correctly wired silently dropped updates from a scripted
+  `input`-only listener. For an audio instrument: don't assume `ctx.resume()`
+  or a trigger fired just because the call site looks right --- actually
+  tap/click/press and confirm sound comes out.
+- **Rule out the tool before you believe the page is broken.** A scripted
+  interaction that changes nothing might be the automation failing to drive
+  that specific control (a native `<select>`'s OS popup, browser autoplay
+  gating audio before a real user gesture), not a bug in the page. Cross-check
+  with a different control or a manual pass before trusting a negative result.
