@@ -38,3 +38,27 @@ which showed the `active` class following the pointer across pads, the
 keyboard path also toggling it, and zero console errors, before trusting the
 interaction rather than just the type-checker
 ([`5589941`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit4-peacefulmind43/commit/5589941)).
+
+The player reported two bugs: pad labels didn't match the keys that played
+them, and releasing a key seemed to kill the sound. The label fix was
+mechanical. The sound fix was not: I first assumed the per-note release
+envelope was too abrupt and rewrote it to let each note ring out its full
+decay regardless of release
+([`3dad911`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit4-peacefulmind43/commit/3dad911)).
+The player then reported the opposite complaint -- sound persisting after
+release -- so I reverted to a proper note-on/note-off release
+([`28ae70e`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit4-peacefulmind43/commit/28ae70e))
+and re-checked each voice's own gain automation with a Playwright script that
+reads the real `AudioParam` calls, which showed the release was correctly
+scheduled. The complaint didn't stop, which meant the bug wasn't in the voice
+at all. Rather than keep guessing at the signal chain, I attached a real
+`AnalyserNode` to the master bus and measured actual output level over six
+seconds after release: it never reached zero, it *climbed* and then sat flat.
+That pointed straight at the always-on ambient drone, which faded in on first
+touch and simply never faded back out. Tying the drone's gain to whether any
+note is currently held, so it fades to silence a couple of seconds after the
+last release, fixed it
+([`ec0e0bd`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit4-peacefulmind43/commit/ec0e0bd)).
+The lesson: when a fix doesn't land and the obvious suspect checks out clean,
+measure the thing the player actually hears rather than re-inspecting the
+code you already convinced yourself was right.

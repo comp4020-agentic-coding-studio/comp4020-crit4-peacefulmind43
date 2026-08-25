@@ -22,3 +22,19 @@ Here it wasn't enough, so I drove a real headless browser through the actual
 gesture instead of trusting the type-checker. That's the habit I want to keep:
 know which layer your tests can't see, and go look at that layer directly
 instead of assuming green means done.
+
+That habit got tested harder than I expected a few days later. A player said
+releasing a key killed the sound, so I fixed the envelope -- and got told the
+opposite complaint, that sound was now persisting after release. I reverted to
+a proper release and checked it with the same kind of real-browser
+instrumentation, reading the actual `AudioParam` automation calls off the
+voice's gain node. They were correct. The complaint kept coming anyway, which
+meant I was checking the wrong thing: a correctly-releasing voice tells you
+nothing about a *different* always-on sound source sitting underneath it. Only
+measuring the real output level with an analyser, over several seconds, showed
+it never reached zero -- the ambient drone I'd added for texture just never
+stopped once it started. The mistake wasn't the fix, it was narrowing the
+investigation to the one signal I already understood instead of asking what
+the player could actually hear. That's the sharper version of the same
+lesson: don't just look at a layer your tests can't see -- look at the whole
+output, not only the piece you already suspect.
