@@ -1,16 +1,113 @@
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+}
+
 body {
   margin: 0;
-  padding: 2rem;
+  padding: 2rem 1.25rem 3rem;
   font-family: system-ui, sans-serif;
   line-height: 1.6;
-  color: #1a1a1a;
+  color: #f1ecff;
+  background: linear-gradient(160deg, #2b2154 0%, #150f2a 55%, #0a0814 100%);
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
 main {
   max-width: 40rem;
   margin: 0 auto;
+  text-align: center;
 }
 
-a {
-  color: #0b5fff;
+header nav a {
+  color: #cabbff;
+}
+
+h1 {
+  font-size: 2rem;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+}
+
+.invite {
+  color: #cabbff;
+  margin: 0 auto 2rem;
+  max-width: 32rem;
+}
+
+.invite kbd {
+  display: inline-block;
+  min-width: 1.4em;
+  padding: 0.05em 0.35em;
+  border-radius: 0.3em;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 0.85em;
+}
+
+.surface {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(4.5rem, 1fr));
+  gap: 0.75rem;
+  touch-action: none;
+  user-select: none;
+}
+
+.pad {
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: rgba(10, 8, 20, 0.75);
+  background: hsl(calc(202 + (var(--i) * 8)), 70%, 68%);
+  box-shadow: 0 0.35rem 0.9rem rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    filter 120ms ease;
+}
+
+.pad:first-child {
+  animation: invite-pulse 2.2s ease-in-out infinite;
+}
+
+body.played .pad {
+  animation: none;
+}
+
+.pad.active {
+  transform: scale(0.92);
+  filter: brightness(1.25);
+  box-shadow: 0 0.15rem 0.4rem rgba(0, 0, 0, 0.35);
+}
+
+.pad:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+
+.hint {
+  margin-top: 2rem;
+  font-size: 0.9rem;
+  color: rgba(241, 236, 255, 0.65);
+}
+
+@keyframes invite-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0.35rem 0.9rem rgba(0, 0, 0, 0.35);
+  }
+
+  50% {
+    box-shadow:
+      0 0.35rem 0.9rem rgba(0, 0, 0, 0.35),
+      0 0 0 0.6rem rgba(255, 255, 255, 0.12);
+  }
 }

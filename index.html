@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>COMP4020 prototype</title>
+    <title>Constellation --- an instrument</title>
     <meta
       name="description"
-      content="Replace this with one sentence saying what this page is. A search result and a link preview both show it."
+      content="A playable constellation of tones --- touch, click, or press a key to make sound, synthesised live in the browser."
     />
 
     <!--
@@ -27,10 +27,29 @@
       </nav>
     </header>
     <main>
-      <h1>COMP4020 prototype</h1>
-      <p data-testid="intro">
-        Replace this with your prototype. This week's brief is on the course website;
-        <code>spec/README.md</code> explains how the checks in this repo relate to it.
+      <h1>Constellation</h1>
+      <p class="invite" data-testid="invite">
+        Touch, click, or press a key to make a sound --- <kbd>A</kbd>
+        <kbd>S</kbd> <kbd>D</kbd> <kbd>F</kbd> <kbd>G</kbd> <kbd>H</kbd>
+        <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> <kbd>;</kbd>
+      </p>
+      <div class="surface" data-testid="surface">
+        <button type="button" class="pad" data-testid="pad" data-note="C4" data-key="A" style="--i: 0" aria-label="Play C 4">C</button>
+        <button type="button" class="pad" data-testid="pad" data-note="D4" data-key="S" style="--i: 1" aria-label="Play D 4">D</button>
+        <button type="button" class="pad" data-testid="pad" data-note="E4" data-key="D" style="--i: 2" aria-label="Play E 4">E</button>
+        <button type="button" class="pad" data-testid="pad" data-note="G4" data-key="F" style="--i: 3" aria-label="Play G 4">G</button>
+        <button type="button" class="pad" data-testid="pad" data-note="A4" data-key="G" style="--i: 4" aria-label="Play A 4">A</button>
+        <button type="button" class="pad" data-testid="pad" data-note="C5" data-key="H" style="--i: 5" aria-label="Play C 5">C</button>
+        <button type="button" class="pad" data-testid="pad" data-note="D5" data-key="J" style="--i: 6" aria-label="Play D 5">D</button>
+        <button type="button" class="pad" data-testid="pad" data-note="E5" data-key="K" style="--i: 7" aria-label="Play E 5">E</button>
+        <button type="button" class="pad" data-testid="pad" data-note="G5" data-key="L" style="--i: 8" aria-label="Play G 5">G</button>
+        <button type="button" class="pad" data-testid="pad" data-note="A5" data-key=";" style="--i: 9" aria-label="Play A 5">A</button>
+      </div>
+      <p class="hint">
+        Drag across pads for a glissando. Hold near the top of a pad for a
+        brighter tone, near the bottom for a darker one. A soft drone follows
+        whatever you last played --- keep going and the whole thing drifts
+        somewhere new.
       </p>
     </main>
     <script type="module" src="./main.ts"></script>
