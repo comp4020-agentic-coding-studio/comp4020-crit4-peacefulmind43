@@ -52,10 +52,6 @@ interface Bus {
   readonly reverbSend: GainNode;
 }
 
-interface Voice {
-  stop(): void;
-}
-
 let bus: Bus | null = null;
 
 function makeImpulse(ctx: AudioContext, seconds: number, decay: number): AudioBuffer {
@@ -161,8 +157,12 @@ function updateDrone(note: Note): void {
 }
 
 // --- A single struck note ---------------------------------------------------
+// Plucked, like a bell or a mallet: once triggered a note rings for its own
+// fixed decay no matter how briefly you pressed. Releasing early only clears
+// the visual highlight --- it never cuts the sound short, so a quick tap still
+// produces a whole note instead of a click.
 
-function trigger(padIndex: number, clientY: number): Voice {
+function trigger(padIndex: number, clientY: number): void {
   const activeBus = ensureAudio();
   const { ctx, master, delaySend, reverbSend } = activeBus;
   const note = NOTES[padIndex];
@@ -209,25 +209,13 @@ function trigger(padIndex: number, clientY: number): Voice {
   oscB.stop(naturalStop);
 
   updateDrone(note);
-
-  let stopped = false;
-  return {
-    stop(): void {
-      if (stopped) return;
-      stopped = true;
-      const t = ctx.currentTime;
-      voiceGain.gain.cancelScheduledValues(t);
-      voiceGain.gain.setValueAtTime(voiceGain.gain.value, t);
-      voiceGain.gain.exponentialRampToValueAtTime(0.0006, t + 0.18);
-      oscA.stop(t + 0.2);
-      oscB.stop(t + 0.2);
-    },
-  };
 }
 
 // --- Input: pointer (mouse & touch), hit-tested against pad rects so a drag
 // glissandos across pads even though touch implicitly captures to whichever
-// pad first received it. Keyboard is handled separately below. -------------
+// pad first received it. Keyboard is handled separately below. Releasing
+// only clears the "active" highlight --- the note itself keeps ringing on
+// its own decay, tracked per pointer purely so the highlight follows it. ---
 
 function padIndexAt(x: number, y: number): number {
   for (let i = 0; i < pads.length; i++) {
@@ -238,40 +226,37 @@ function padIndexAt(x: number, y: number): number {
 }
 
 const heldPointers = new Set<number>();
-const activePointerVoices = new Map<number, { padIndex: number; voice: Voice }>();
+const activePointerPads = new Map<number, number>();
 
 function markInvited(): void {
   document.body.classList.add("played");
 }
 
 function onPointerActive(pointerId: number, x: number, y: number): void {
-  const current = activePointerVoices.get(pointerId);
+  const currentIdx = activePointerPads.get(pointerId);
   const idx = padIndexAt(x, y);
 
-  if (current && idx === current.padIndex) return;
+  if (currentIdx === idx) return;
 
-  if (current) {
-    pads[current.padIndex].classList.remove("active");
-    current.voice.stop();
-    activePointerVoices.delete(pointerId);
+  if (currentIdx !== undefined && currentIdx !== -1) {
+    pads[currentIdx].classList.remove("active");
   }
 
   if (idx !== -1) {
     markInvited();
-    const voice = trigger(idx, y);
-    activePointerVoices.set(pointerId, { padIndex: idx, voice });
+    trigger(idx, y);
     pads[idx].classList.add("active");
+    activePointerPads.set(pointerId, idx);
+  } else {
+    activePointerPads.delete(pointerId);
   }
 }
 
 function releasePointer(pointerId: number): void {
   heldPointers.delete(pointerId);
-  const current = activePointerVoices.get(pointerId);
-  if (current) {
-    pads[current.padIndex].classList.remove("active");
-    current.voice.stop();
-    activePointerVoices.delete(pointerId);
-  }
+  const idx = activePointerPads.get(pointerId);
+  if (idx !== undefined && idx !== -1) pads[idx].classList.remove("active");
+  activePointerPads.delete(pointerId);
 }
 
 if (surface) {
@@ -292,7 +277,7 @@ window.addEventListener("pointercancel", (event) => releasePointer(event.pointer
 
 // --- Input: keyboard ---------------------------------------------------------
 
-const heldKeys = new Map<string, Voice>();
+const heldKeys = new Set<string>();
 
 window.addEventListener("keydown", (event) => {
   if (event.repeat) return;
@@ -302,17 +287,15 @@ window.addEventListener("keydown", (event) => {
 
   markInvited();
   const rect = pads[idx].getBoundingClientRect();
-  const voice = trigger(idx, rect.top + rect.height * 0.3);
-  heldKeys.set(key, voice);
+  trigger(idx, rect.top + rect.height * 0.3);
+  heldKeys.add(key);
   pads[idx].classList.add("active");
 });
 
 window.addEventListener("keyup", (event) => {
   const key = event.key.toLowerCase();
-  const voice = heldKeys.get(key);
-  if (!voice) return;
+  if (!heldKeys.has(key)) return;
   heldKeys.delete(key);
   const idx = KEY_MAP[key];
   if (idx !== undefined) pads[idx].classList.remove("active");
-  voice.stop();
 });
