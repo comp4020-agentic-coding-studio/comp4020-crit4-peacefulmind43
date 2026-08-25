@@ -105,20 +105,26 @@ function ensureAudio(): Bus {
   return bus;
 }
 
-// --- The drone: a slow chord that drifts toward the last note you played ---
+// --- The drone: a slow chord that drifts toward the last note you played.
+// It only sounds while at least one note is held --- it fades in with the
+// first held note and fades all the way to silence a couple of seconds after
+// the last one releases, so letting go of everything actually goes quiet. ---
 
 let droneOscillators: OscillatorNode[] = [];
+let droneGain: GainNode | null = null;
 const DRONE_RATIOS = [1, 1.5, 2] as const;
+const DRONE_LEVEL = 0.1;
 
 function startDrone(activeBus: Bus): void {
   const { ctx, master, reverbSend } = activeBus;
 
-  const droneGain = ctx.createGain();
-  droneGain.gain.value = 0;
+  const gain = ctx.createGain();
+  gain.gain.value = 0;
+  droneGain = gain;
   const droneFilter = ctx.createBiquadFilter();
   droneFilter.type = "lowpass";
   droneFilter.frequency.value = 900;
-  droneGain.connect(droneFilter);
+  gain.connect(droneFilter);
   droneFilter.connect(master);
   droneFilter.connect(reverbSend);
 
@@ -135,12 +141,32 @@ function startDrone(activeBus: Bus): void {
     const osc = ctx.createOscillator();
     osc.type = "sine";
     osc.frequency.value = base * ratio;
-    osc.connect(droneGain);
+    osc.connect(gain);
     osc.start();
     return osc;
   });
+}
 
-  droneGain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 3);
+let activeVoices = 0;
+
+function noteOn(): void {
+  activeVoices++;
+  if (activeVoices > 1 || !bus || !droneGain) return;
+  const { ctx } = bus;
+  const now = ctx.currentTime;
+  droneGain.gain.cancelScheduledValues(now);
+  droneGain.gain.setValueAtTime(droneGain.gain.value, now);
+  droneGain.gain.linearRampToValueAtTime(DRONE_LEVEL, now + 2);
+}
+
+function noteOff(): void {
+  activeVoices = Math.max(0, activeVoices - 1);
+  if (activeVoices > 0 || !bus || !droneGain) return;
+  const { ctx } = bus;
+  const now = ctx.currentTime;
+  droneGain.gain.cancelScheduledValues(now);
+  droneGain.gain.setValueAtTime(droneGain.gain.value, now);
+  droneGain.gain.linearRampToValueAtTime(0, now + 1.5);
 }
 
 function updateDrone(note: Note): void {
@@ -212,6 +238,7 @@ function trigger(padIndex: number, clientY: number): Voice {
   oscB.stop(naturalStop);
 
   updateDrone(note);
+  noteOn();
 
   let released = false;
   return {
@@ -225,6 +252,7 @@ function trigger(padIndex: number, clientY: number): Voice {
       voiceGain.gain.exponentialRampToValueAtTime(0.0001, releaseTime + releaseLength);
       oscA.stop(releaseTime + releaseLength + 0.02);
       oscB.stop(releaseTime + releaseLength + 0.02);
+      noteOff();
     },
   };
 }
